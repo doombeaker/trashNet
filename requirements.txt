@@ -1,0 +1,5 @@
+Werkzeug==2.0.1
+Flask==2.0.2
+numpy==1.18.4
+onnxruntime
+Pillow==8.4.0

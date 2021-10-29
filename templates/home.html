@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- 引入样式文件 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vant@2.12/lib/index.css" />
+
+  <!-- 引入 Vue 和 Vant 的 JS 文件 -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6/dist/vue.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vant@2.12/lib/vant.min.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/axios/0.21.1/axios.min.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/compressorjs/1.0.7/compressor.min.js"></script>
+
+  <title>垃圾分类</title>
+</head>
+
+<body>
+
+  <div id="app">
+    <van-row>
+      <van-nav-bar title="垃圾分类助手" left-text="首页" right-text="说明" />
+    </van-row>
+
+    <van-row>
+      <van-col span="9"></van-col>
+      <van-col span="8">
+        <div text-align="center">
+          <van-uploader id="image" name="image" :after-read="afterRead" :max-count="1" />
+        </div>
+      </van-col>
+      <van-col span="7"></van-col>
+    </van-row>
+    <van-row>
+      <van-image :src="image_url" />
+    </van-row>
+
+    <van-row>
+      <van-field v-model="prediction" label="分类建议" placeholder="" />
+    </van-row>
+
+  </div>
+  <script type="module">
+
+    // 在 #app 标签下渲染一个按钮组件
+    new Vue({
+      el: '#app',
+      methods: {
+        afterRead(file) {
+          var vue_obj = this;
+          file.status = 'uploading';
+          file.message = "上传中";
+          new Compressor(file.file, {
+            quality: 0.6,
+            maxWidth: 1024,
+            maxHeight: 960,
+
+            // The compression process is asynchronous,
+            // which means you have to access the `result` in the `success` hook function.
+            success(result) {
+              const formData = new FormData();
+
+              // The third parameter is required for server
+              formData.append('image', result, result.name);
+
+              // Send the compressed image file to server with XMLHttpRequest.
+              axios.post("", formData).then((res) => {
+                console.log('Upload success');
+                vue_obj.image_url = res.data.image_url;
+                vue_obj.prediction = res.data.prediction;
+                vant.Toast(res.data.prediction);
+              });
+            },
+            error(err) {
+              console.log(err.message);
+            },
+          });
+        },
+      },
+      data() {
+        return {
+          fileList: [
+          ],
+          image_url: "https://www.oneflow.org/uploads/media/210225/2-21022514224Cc.jpg",
+          prediction: "",
+        };
+      },
+    });
+    Vue.use(vant.Uploader);
+    Vue.use(vant.Col);
+    Vue.use(vant.Row);
+    Vue.use(vant.VanImage);
+    Vue.use(vant.Toast);
+    Vue.use(vant.NavBar);
+    Vue.use(vant.Field);
+  </script>
+
+</body>
+
+</html>
