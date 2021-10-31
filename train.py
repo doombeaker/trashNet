@@ -6,7 +6,15 @@ import torchvision
 import time
 import copy
 
-saved_file = "./trash_classifier_40_model.pth"
+SAVED_FILE = "./trash_classifier_40_model.pth"
+DATA_DIR = "path_to_datasets"
+EPOCH_NUM = 50
+LR = 0.01
+SCHEDULER_STEP = 10
+
+if not os.path.isdir(DATA_DIR):
+    print("Please set the DATA_DIR according to dataset path")
+    exit(1)
 
 data_transforms = {
     "train": transforms.Compose(
@@ -27,9 +35,8 @@ data_transforms = {
     ),
 }
 
-data_dir = "datasets40"
 image_datasets = {
-    x: datasets.ImageFolder(os.path.join(data_dir, x), data_transforms[x])
+    x: datasets.ImageFolder(os.path.join(DATA_DIR, x), data_transforms[x])
     for x in ["train", "val"]
 }
 dataloaders = {
@@ -54,13 +61,13 @@ model_ft.classifier = torch.nn.Sequential(
 
 model_ft.to(device)
 loss_fn = torch.nn.CrossEntropyLoss()
-optimizer_ft = torch.optim.AdamW(model_ft.classifier.parameters(), lr=0.01)
+optimizer_ft = torch.optim.AdamW(model_ft.classifier.parameters(), lr=LR)
 exp_lr_scheduler = torch.optim.lr_scheduler.StepLR(
-    optimizer_ft, step_size=10, gamma=0.1
+    optimizer_ft, step_size=SCHEDULER_STEP, gamma=0.1
 )
 
 
-def train(model, loss_fn, optimizer, scheduler, epoch, num_epoches=50):
+def train(model, loss_fn, optimizer, scheduler, epoch, num_epoches):
     print("Epoch {0}/{1}".format(epoch + 1, num_epoches))
     print("-" * 10)
 
@@ -108,7 +115,7 @@ def test(model, loss_fn):
     return loss, acc
 
 
-def train_and_test(model, loss_fn, optimizer, scheduler, num_epoches=5):
+def train_and_test(model, loss_fn, optimizer, scheduler, num_epoches):
     since = time.time()
 
     best_model = copy.deepcopy(model.state_dict())
@@ -141,10 +148,10 @@ def train_and_test(model, loss_fn, optimizer, scheduler, num_epoches=5):
 
 
 if __name__ == "__main__":
-    if os.path.exists(saved_file):
+    if os.path.exists(SAVED_FILE):
         print("Load existing file...")
-        params = torch.load(saved_file)
+        params = torch.load(SAVED_FILE)
         model_ft.load_state_dict(params)
 
-    model_ft = train_and_test(model_ft, loss_fn, optimizer_ft, exp_lr_scheduler)
-    torch.save(model_ft.state_dict(), saved_file)
+    model_ft = train_and_test(model_ft, loss_fn, optimizer_ft, exp_lr_scheduler, EPOCH_NUM)
+    torch.save(model_ft.state_dict(), SAVED_FILE)
